@@ -1,4 +1,4 @@
-# Portfolio
+# CS-projects
 My collection of informatics and programming projects showcasing various technologies and programming concepts.
 
 <hr>
