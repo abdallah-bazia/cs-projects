@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NaaS Control Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c14;
+    --surface: #0d1520;
+    --surface2: #111d2e;
+    --border: #1a2d45;
+    --accent: #00d4ff;
+    --accent2: #0066ff;
+    --green: #00e676;
+    --red: #ff3d57;
+    --yellow: #ffb300;
+    --text: #e8f4f8;
+    --text2: #7a9bb5;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Header */
+  header {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8,12,20,0.9);
+    backdrop-filter: blur(10px);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .logo-text {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--accent);
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--text2);
+    letter-spacing: 1px;
+  }
+
+  .status-bar {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .status-dot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text2);
+  }
+
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  .dot.off { background: var(--red); box-shadow: 0 0 8px var(--red); animation: none; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Layout */
+  .app {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: calc(100vh - 65px);
+  }
+
+  /* Sidebar */
+  nav {
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    background: rgba(13,21,32,0.6);
+  }
+
+  .nav-section {
+    margin-bottom: 28px;
+    padding: 0 16px;
+  }
+
+  .nav-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    letter-spacing: 2px;
+    color: var(--text2);
+    margin-bottom: 8px;
+    padding: 0 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    transition: all 0.15s;
+    margin-bottom: 2px;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.2); }
+  .nav-item .icon { font-size: 15px; width: 20px; text-align: center; }
+
+  /* Main */
+  main { padding: 28px 32px; overflow-y: auto; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--text2);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .page-heading {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: var(--text);
+  }
+
+  /* Cards */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--text2);
+    font-weight: 500;
+  }
+
+  /* Panels */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 1px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .panel-body { padding: 20px; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--text2);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 400;
+  }
+  td {
+    padding: 11px 12px;
+    border-bottom: 1px solid rgba(26,45,69,0.5);
+    color: var(--text);
+    font-size: 13px;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* Badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: var(--mono);
+    font-weight: 700;
+  }
+  .badge.active { background: rgba(0,230,118,0.15); color: var(--green); border: 1px solid rgba(0,230,118,0.3); }
+  .badge.deploying { background: rgba(255,179,0,0.15); color: var(--yellow); border: 1px solid rgba(255,179,0,0.3); }
+  .badge.failed { background: rgba(255,61,87,0.15); color: var(--red); border: 1px solid rgba(255,61,87,0.3); }
+  .badge.forward { background: rgba(0,230,118,0.1); color: var(--green); border: 1px solid rgba(0,230,118,0.2); }
+  .badge.drop { background: rgba(255,61,87,0.1); color: var(--red); border: 1px solid rgba(255,61,87,0.2); }
+  .badge.redirect { background: rgba(0,102,255,0.1); color: #66aaff; border: 1px solid rgba(0,102,255,0.2); }
+
+  /* Forms */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1/-1; }
+  label { font-size: 11px; font-family: var(--mono); letter-spacing: 1px; color: var(--text2); }
+
+  input, select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: var(--sans);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  select option { background: var(--bg); }
+
+  /* Buttons */
+  .btn {
+    padding: 9px 18px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--sans);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #000;
+  }
+  .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-danger { background: rgba(255,61,87,0.15); color: var(--red); border: 1px solid rgba(255,61,87,0.3); }
+  .btn-danger:hover { background: rgba(255,61,87,0.25); }
+  .btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+
+  /* Traffic log */
+  .log-entry {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(26,45,69,0.4);
+    font-size: 12px;
+    font-family: var(--mono);
+    animation: slideIn 0.3s ease;
+  }
+  .log-entry:last-child { border-bottom: none; }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+
+  .log-time { color: var(--text2); min-width: 80px; }
+  .log-src { color: var(--accent); min-width: 120px; }
+  .log-dst { color: #aaa; min-width: 120px; }
+  .log-result-ok { color: var(--green); }
+  .log-result-drop { color: var(--red); }
+  .log-result-redir { color: #66aaff; }
+
+  /* Simulate panel */
+  .sim-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .result-box {
+    padding: 16px;
+    border-radius: 10px;
+    margin-top: 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    display: none;
+  }
+  .result-box.show { display: block; }
+  .result-ok { background: rgba(0,230,118,0.1); border: 1px solid rgba(0,230,118,0.3); color: var(--green); }
+  .result-drop { background: rgba(255,61,87,0.1); border: 1px solid rgba(255,61,87,0.3); color: var(--red); }
+  .result-redir { background: rgba(0,102,255,0.1); border: 1px solid rgba(0,102,255,0.3); color: #66aaff; }
+
+  /* Priority bar */
+  .priority-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  .priority-fill {
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--text2);
+    font-size: 13px;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .mono { font-family: var(--mono); font-size: 12px; }
+  .text2 { color: var(--text2); }
+
+  .ip { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    font-size: 13px;
+    z-index: 1000;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    max-width: 300px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: rgba(0,230,118,0.4); }
+  .toast.error { border-color: rgba(255,61,87,0.4); }
+
+  .hits-badge {
+    display: inline-block;
+    background: rgba(0,212,255,0.1);
+    border: 1px solid rgba(0,212,255,0.2);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 1px 7px;
+    border-radius: 10px;
+  }
+
+  .section-divider {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text2);
+    text-transform: uppercase;
+    margin: 20px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌐</div>
+    <div>
+      <div class="logo-text">NaaS PLATFORM</div>
+      <div class="logo-sub">NETWORK AS A SERVICE — PROOF OF CONCEPT</div>
+    </div>
+  </div>
+  <div class="status-bar">
+    <div class="status-dot"><div class="dot" id="ctrl-dot"></div><span id="ctrl-status">SDN Controller</span></div>
+    <div class="status-dot"><div class="dot" id="portal-dot"></div><span id="portal-status">NaaS Portal</span></div>
+    <div class="status-dot" style="margin-left:8px; color: var(--text2); font-size:11px;" id="clock"></div>
+  </div>
+</header>
+
+<div class="app">
+  <nav>
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" onclick="showPage('dashboard')"><span class="icon">⬡</span> Dashboard</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Management</div>
+      <div class="nav-item" onclick="showPage('tenants')"><span class="icon">👤</span> Tenants</div>
+      <div class="nav-item" onclick="showPage('services')"><span class="icon">⚙</span> Services</div>
+      <div class="nav-item" onclick="showPage('vnfs')"><span class="icon">🔧</span> VNFs</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Network</div>
+      <div class="nav-item" onclick="showPage('flows')"><span class="icon">⇄</span> Flow Table</div>
+      <div class="nav-item" onclick="showPage('simulate')"><span class="icon">▶</span> Simulate</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Observability</div>
+      <div class="nav-item" onclick="showPage('traffic')"><span class="icon">📡</span> Traffic Log</div>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-title">Overview</div>
+      <div class="page-heading">NaaS Control Center</div>
+
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-value" id="s-nodes">—</div><div class="stat-label">Active Nodes</div></div>
+        <div class="stat-card"><div class="stat-value" id="s-flows">—</div><div class="stat-label">Flow Rules</div></div>
+        <div class="stat-card"><div class="stat-value" id="s-vnfs">—</div><div class="stat-label">Active VNFs</div></div>
+        <div class="stat-card"><div class="stat-value" id="s-fwd" style="color:var(--green)">—</div><div class="stat-label">Packets Forwarded</div></div>
+        <div class="stat-card"><div class="stat-value" id="s-drop" style="color:var(--red)">—</div><div class="stat-label">Packets Dropped</div></div>
+        <div class="stat-card"><div class="stat-value" id="s-tenants">—</div><div class="stat-label">Tenants</div></div>
+        <div class="stat-card"><div class="stat-value" id="s-svcs">—</div><div class="stat-label">Active Services</div></div>
+      </div>
+
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">FLOW TABLE SNAPSHOT</div><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="showPage('flows')">View All →</button></div>
+          <table>
+            <thead><tr><th>SRC</th><th>DST</th><th>ACTION</th><th>HITS</th></tr></thead>
+            <tbody id="dash-flows"><tr><td colspan="4" class="empty-state">No flows yet</td></tr></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">RECENT TRAFFIC</div><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="showPage('traffic')">View All →</button></div>
+          <div id="dash-traffic" style="padding:12px 0">
+            <div class="empty-state">No traffic yet</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TENANTS -->
+    <div class="page" id="page-tenants">
+      <div class="page-title">Management</div>
+      <div class="page-heading">Tenants</div>
+
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-header"><div class="panel-title">CREATE TENANT</div></div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>TENANT NAME</label>
+              <input id="t-name" placeholder="e.g. University of Jijel">
+            </div>
+            <div class="form-group">
+              <label>PLAN</label>
+              <select id="t-plan">
+                <option value="basic">Basic — 100 Mbps</option>
+                <option value="business">Business — 500 Mbps</option>
+                <option value="enterprise">Enterprise — 10 Gbps</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="createTenant()">＋ Create Tenant</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">ALL TENANTS</div><span id="tenant-count" class="text2 mono">0 tenants</span></div>
+        <table>
+          <thead><tr><th>NAME</th><th>PLAN</th><th>BANDWIDTH</th><th>SERVICES</th><th>CREATED</th><th></th></tr></thead>
+          <tbody id="tenants-table"><tr><td colspan="6" class="empty-state">No tenants yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SERVICES -->
+    <div class="page" id="page-services">
+      <div class="page-title">Management</div>
+      <div class="page-heading">Network Services</div>
+
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-header"><div class="panel-title">PROVISION SERVICE</div></div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>TENANT</label>
+              <select id="svc-tenant"></select>
+            </div>
+            <div class="form-group">
+              <label>SERVICE TYPE</label>
+              <select id="svc-type" onchange="updateServiceForm()">
+                <option value="sdwan">SD-WAN</option>
+                <option value="firewall">Firewall-as-a-Service</option>
+                <option value="loadbalancer">Load Balancer</option>
+                <option value="nat">NAT Gateway</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="svc-form-sdwan">
+            <div class="section-divider">SD-WAN Config</div>
+            <div class="form-grid">
+              <div class="form-group"><label>SOURCE NODE IP</label><input id="sdwan-src" value="10.0.0.1" placeholder="10.0.0.1"></div>
+              <div class="form-group"><label>DESTINATION NODE IP</label><input id="sdwan-dst" value="10.0.0.3" placeholder="10.0.0.3"></div>
+              <div class="form-group"><label>BANDWIDTH (Mbps)</label><input id="sdwan-bw" value="500" type="number"></div>
+            </div>
+          </div>
+
+          <div id="svc-form-firewall" style="display:none">
+            <div class="section-divider">Firewall Config</div>
+            <div class="form-grid">
+              <div class="form-group"><label>NODE ID</label><input id="fw-node" value="node-gw"></div>
+              <div class="form-group"><label>BLOCKED IPs (comma separated)</label><input id="fw-ips" value="192.168.5.99, 10.99.0.0"></div>
+            </div>
+          </div>
+
+          <div id="svc-form-lb" style="display:none">
+            <div class="section-divider">Load Balancer Config</div>
+            <div class="form-grid">
+              <div class="form-group"><label>VIRTUAL IP</label><input id="lb-vip" value="10.0.0.100"></div>
+              <div class="form-group"><label>BACKENDS (comma separated)</label><input id="lb-backends" value="10.0.0.3, 10.0.0.4, 10.0.0.5"></div>
+              <div class="form-group"><label>NODE ID</label><input id="lb-node" value="node-h3"></div>
+            </div>
+          </div>
+
+          <div id="svc-form-nat" style="display:none">
+            <div class="section-divider">NAT Config</div>
+            <div class="form-grid">
+              <div class="form-group"><label>PRIVATE SUBNET</label><input id="nat-subnet" value="192.168.0.0/24"></div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="provisionService()">⚡ Provision Service</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">ACTIVE SERVICES</div><span id="svc-count" class="text2 mono">0 services</span></div>
+        <table>
+          <thead><tr><th>ID</th><th>TENANT</th><th>TYPE</th><th>STATUS</th><th>CREATED</th><th></th></tr></thead>
+          <tbody id="services-table"><tr><td colspan="6" class="empty-state">No services provisioned</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VNFs -->
+    <div class="page" id="page-vnfs">
+      <div class="page-title">Management</div>
+      <div class="page-heading">Virtual Network Functions</div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">DEPLOYED VNFs</div><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="loadVnfs()">↻ Refresh</button></div>
+        <table>
+          <thead><tr><th>VNF ID</th><th>TYPE</th><th>NODE</th><th>STATUS</th><th>DEPLOYED</th></tr></thead>
+          <tbody id="vnfs-table"><tr><td colspan="5" class="empty-state">No VNFs deployed</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FLOWS -->
+    <div class="page" id="page-flows">
+      <div class="page-title">Network</div>
+      <div class="page-heading">SDN Flow Table</div>
+
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-header"><div class="panel-title">ADD FLOW RULE</div></div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="form-group"><label>SOURCE IP</label><input id="fl-src" placeholder="10.0.0.1 or *"></div>
+            <div class="form-group"><label>DESTINATION IP</label><input id="fl-dst" placeholder="10.0.0.3 or *"></div>
+            <div class="form-group">
+              <label>ACTION</label>
+              <select id="fl-action">
+                <option value="forward">Forward</option>
+                <option value="drop">Drop</option>
+                <option value="redirect">Redirect</option>
+              </select>
+            </div>
+            <div class="form-group"><label>PRIORITY</label><input id="fl-priority" type="number" value="100" min="1" max="999"></div>
+            <div class="form-group">
+              <label>PROTOCOL</label>
+              <select id="fl-proto">
+                <option value="any">Any</option>
+                <option value="tcp">TCP</option>
+                <option value="udp">UDP</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="addFlow()">＋ Add Flow Rule</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">FLOW TABLE</div><span id="flow-count" class="text2 mono">0 rules</span></div>
+        <table>
+          <thead><tr><th>FLOW ID</th><th>PRIORITY</th><th>SOURCE</th><th>DESTINATION</th><th>PROTOCOL</th><th>ACTION</th><th>HITS</th><th></th></tr></thead>
+          <tbody id="flows-table"><tr><td colspan="8" class="empty-state">No flow rules</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SIMULATE -->
+    <div class="page" id="page-simulate">
+      <div class="page-title">Network</div>
+      <div class="page-heading">Traffic Simulator</div>
+
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">SEND PACKET</div></div>
+          <div class="panel-body">
+            <div class="form-group" style="margin-bottom:12px">
+              <label>SOURCE IP</label>
+              <input id="sim-src" placeholder="10.0.0.1">
+            </div>
+            <div class="form-group" style="margin-bottom:12px">
+              <label>DESTINATION IP</label>
+              <input id="sim-dst" placeholder="10.0.0.3">
+            </div>
+            <div class="form-grid" style="margin-bottom:12px">
+              <div class="form-group">
+                <label>PROTOCOL</label>
+                <select id="sim-proto">
+                  <option value="tcp">TCP</option>
+                  <option value="udp">UDP</option>
+                  <option value="icmp">ICMP</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>SIZE (KB)</label>
+                <input id="sim-size" type="number" value="10">
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width:100%" onclick="simulateTraffic()">▶ Send Packet</button>
+
+            <div class="result-box" id="sim-result"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">QUICK SCENARIOS</div></div>
+          <div class="panel-body" style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-ghost" style="justify-content:flex-start;text-align:left" onclick="quickSim('10.0.0.1','10.0.0.3','tcp',100)">✓ Branch A → Data Center (SD-WAN)</button>
+            <button class="btn btn-ghost" style="justify-content:flex-start;text-align:left" onclick="quickSim('10.0.0.2','10.0.0.3','tcp',80)">✓ Branch B → Data Center (SD-WAN)</button>
+            <button class="btn btn-ghost" style="justify-content:flex-start;text-align:left" onclick="quickSim('192.168.5.99','10.0.0.3','tcp',5)">✗ Attacker → Data Center</button>
+            <button class="btn btn-ghost" style="justify-content:flex-start;text-align:left" onclick="quickSim('10.99.0.0','10.0.0.1','tcp',5)">✗ Blocked IP → Branch A</button>
+            <button class="btn btn-ghost" style="justify-content:flex-start;text-align:left" onclick="quickSim('10.0.0.1','10.0.0.100','tcp',60)">⇄ Branch A → VIP (Load Balancer)</button>
+            <button class="btn btn-ghost" style="justify-content:flex-start;text-align:left" onclick="quickSim('10.0.1.1','10.0.0.3','udp',10)">⇄ IoT Sensor → Data Center</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRAFFIC -->
+    <div class="page" id="page-traffic">
+      <div class="page-title">Observability</div>
+      <div class="page-heading">Traffic Log</div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">LIVE TRAFFIC LOG</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="loadTraffic()">↻ Refresh</button>
+          </div>
+        </div>
+        <div style="padding:16px 20px" id="traffic-log">
+          <div class="empty-state">No traffic recorded yet</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:5000/api';
+const CTRL = 'http://localhost:6633';
+let tenantMap = {};
+
+// Navigation
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+
+  const loaders = {
+    dashboard: loadDashboard,
+    tenants: loadTenants,
+    services: loadServices,
+    vnfs: loadVnfs,
+    flows: loadFlows,
+    traffic: loadTraffic,
+  };
+  if (loaders[id]) loaders[id]();
+}
+
+// Toast
+function toast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Clock
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+}, 1000);
+
+// Health check
+async function checkHealth() {
+  try {
+    await fetch(CTRL + '/stats');
+    document.getElementById('ctrl-dot').className = 'dot';
+  } catch { document.getElementById('ctrl-dot').className = 'dot off'; }
+  try {
+    await fetch(API + '/monitor/stats');
+    document.getElementById('portal-dot').className = 'dot';
+  } catch { document.getElementById('portal-dot').className = 'dot off'; }
+}
+
+// API helpers
+async function apiGet(url) {
+  const r = await fetch(url);
+  return r.json();
+}
+async function apiPost(url, data) {
+  const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+  return r.json();
+}
+async function apiDelete(url) {
+  const r = await fetch(url, { method:'DELETE' });
+  return r.json();
+}
+
+function badgeHtml(status) {
+  const map = { active:'active', deploying:'deploying', failed:'failed', forward:'forward', drop:'drop', redirect:'redirect' };
+  const cls = map[status] || 'deploying';
+  return `<span class="badge ${cls}">${status}</span>`;
+}
+
+function typeIcon(t) {
+  return { sdwan:'📡', firewall:'🛡', loadbalancer:'⚖', nat:'🔀' }[t] || '⚙';
+}
+
+// DASHBOARD
+async function loadDashboard() {
+  try {
+    const stats = await apiGet(API + '/monitor/stats');
+    const c = stats.controller || {};
+    const p = stats.portal || {};
+    document.getElementById('s-nodes').textContent = c.active_nodes ?? 0;
+    document.getElementById('s-flows').textContent = c.flow_count ?? 0;
+    document.getElementById('s-vnfs').textContent = c.active_vnfs ?? 0;
+    document.getElementById('s-fwd').textContent = c.packets_forwarded ?? 0;
+    document.getElementById('s-drop').textContent = c.packets_dropped ?? 0;
+    document.getElementById('s-tenants').textContent = p.total_tenants ?? 0;
+    document.getElementById('s-svcs').textContent = p.active_services ?? 0;
+
+    const flows = await apiGet(API + '/monitor/flows');
+    const fb = document.getElementById('dash-flows');
+    if (!flows.length) { fb.innerHTML = '<tr><td colspan="4" class="empty-state">No flows yet</td></tr>'; }
+    else {
+      fb.innerHTML = flows.slice(0,5).map(f => `
+        <tr>
+          <td class="ip">${f.src}</td>
+          <td class="ip">${f.dst}</td>
+          <td>${badgeHtml(f.action)}</td>
+          <td><span class="hits-badge">${f.hit_count}</span></td>
+        </tr>`).join('');
+    }
+
+    const traffic = await apiGet(API + '/monitor/traffic');
+    const tb = document.getElementById('dash-traffic');
+    if (!traffic.length) { tb.innerHTML = '<div class="empty-state">No traffic yet</div>'; }
+    else {
+      tb.innerHTML = traffic.slice(-5).reverse().map(t => {
+        const ok = t.result && (t.result.includes('forward') || t.result.includes('redirect'));
+        const cls = ok ? 'log-result-ok' : 'log-result-drop';
+        return `<div class="log-entry">
+          <span class="log-time">${t.time.substr(11,8)}</span>
+          <span class="log-src">${t.src}</span>
+          <span class="text2">→</span>
+          <span class="log-dst">${t.dst}</span>
+          <span class="${cls}">${t.result}</span>
+        </div>`;
+      }).join('');
+    }
+  } catch(e) { console.error(e); }
+}
+
+// TENANTS
+async function loadTenants() {
+  try {
+    const tenants = await apiGet(API + '/tenants');
+    tenantMap = {};
+    tenants.forEach(t => tenantMap[t.tenant_id] = t.name);
+    document.getElementById('tenant-count').textContent = `${tenants.length} tenants`;
+    const tb = document.getElementById('tenants-table');
+    if (!tenants.length) { tb.innerHTML = '<tr><td colspan="6" class="empty-state">No tenants yet</td></tr>'; return; }
+    tb.innerHTML = tenants.map(t => `
+      <tr>
+        <td><b>${t.name}</b></td>
+        <td><span class="badge active">${t.plan}</span></td>
+        <td class="mono">${t.bandwidth_quota_mbps} Mbps</td>
+        <td class="mono">${t.services.length}</td>
+        <td class="text2 mono">${t.created_at.substr(0,16).replace('T',' ')}</td>
+        <td><span class="mono text2" style="font-size:11px">${t.tenant_id}</span></td>
+      </tr>`).join('');
+
+    // update tenant select in services
+    const sel = document.getElementById('svc-tenant');
+    sel.innerHTML = tenants.length
+      ? tenants.map(t => `<option value="${t.tenant_id}">${t.name}</option>`).join('')
+      : '<option value="">— Create a tenant first —</option>';
+  } catch(e) { toast('Cannot reach API', 'error'); }
+}
+
+async function createTenant() {
+  const name = document.getElementById('t-name').value.trim();
+  const plan = document.getElementById('t-plan').value;
+  if (!name) { toast('Enter a tenant name', 'error'); return; }
+  try {
+    await apiPost(API + '/tenants', { name, plan });
+    document.getElementById('t-name').value = '';
+    toast(`✓ Tenant "${name}" created`);
+    loadTenants();
+  } catch(e) { toast('Error creating tenant', 'error'); }
+}
+
+// SERVICES
+function updateServiceForm() {
+  const type = document.getElementById('svc-type').value;
+  ['sdwan','firewall','lb','nat'].forEach(t => {
+    document.getElementById('svc-form-' + t).style.display = 'none';
+  });
+  const map = { sdwan:'sdwan', firewall:'firewall', loadbalancer:'lb', nat:'nat' };
+  document.getElementById('svc-form-' + map[type]).style.display = 'block';
+}
+
+async function loadServices() {
+  await loadTenants();
+  try {
+    const svcs = await apiGet(API + '/services');
+    document.getElementById('svc-count').textContent = `${svcs.length} services`;
+    const tb = document.getElementById('services-table');
+    if (!svcs.length) { tb.innerHTML = '<tr><td colspan="6" class="empty-state">No services provisioned</td></tr>'; return; }
+    tb.innerHTML = svcs.map(s => `
+      <tr>
+        <td class="mono text2" style="font-size:11px">${s.service_id}</td>
+        <td>${tenantMap[s.tenant_id] || s.tenant_id}</td>
+        <td>${typeIcon(s.type)} ${s.type}</td>
+        <td>${badgeHtml(s.status)}</td>
+        <td class="text2 mono">${s.created_at.substr(0,16).replace('T',' ')}</td>
+        <td><button class="btn btn-danger" style="font-size:11px;padding:4px 10px" onclick="deleteService('${s.service_id}')">✕ Remove</button></td>
+      </tr>`).join('');
+  } catch(e) { toast('Cannot reach API', 'error'); }
+}
+
+async function provisionService() {
+  const tenant_id = document.getElementById('svc-tenant').value;
+  const service_type = document.getElementById('svc-type').value;
+  if (!tenant_id) { toast('Select a tenant first', 'error'); return; }
+
+  let config = {};
+  if (service_type === 'sdwan') {
+    config = { src_node: document.getElementById('sdwan-src').value, dst_node: document.getElementById('sdwan-dst').value, bandwidth_mbps: parseInt(document.getElementById('sdwan-bw').value) };
+  } else if (service_type === 'firewall') {
+    config = { node_id: document.getElementById('fw-node').value, block_ips: document.getElementById('fw-ips').value.split(',').map(s=>s.trim()) };
+  } else if (service_type === 'loadbalancer') {
+    config = { vip: document.getElementById('lb-vip').value, backends: document.getElementById('lb-backends').value.split(',').map(s=>s.trim()), node_id: document.getElementById('lb-node').value };
+  } else if (service_type === 'nat') {
+    config = { private_subnet: document.getElementById('nat-subnet').value };
+  }
+
+  try {
+    const r = await apiPost(API + '/services/provision', { tenant_id, service_type, config });
+    toast(`✓ ${service_type} service provisioned`);
+    loadServices();
+  } catch(e) { toast('Error provisioning service', 'error'); }
+}
+
+async function deleteService(id) {
+  try {
+    await apiDelete(API + '/services/' + id);
+    toast('Service removed');
+    loadServices();
+  } catch(e) { toast('Error removing service', 'error'); }
+}
+
+// VNFs
+async function loadVnfs() {
+  try {
+    const vnfs = await apiGet(API + '/monitor/vnfs');
+    const tb = document.getElementById('vnfs-table');
+    if (!vnfs.length) { tb.innerHTML = '<tr><td colspan="5" class="empty-state">No VNFs deployed</td></tr>'; return; }
+    tb.innerHTML = vnfs.map(v => `
+      <tr>
+        <td class="mono text2" style="font-size:11px">${v.vnf_id}</td>
+        <td>${typeIcon(v.type)} ${v.type}</td>
+        <td class="mono">${v.node_id || '—'}</td>
+        <td>${badgeHtml(v.status)}</td>
+        <td class="text2 mono">${v.deployed_at.substr(0,16).replace('T',' ')}</td>
+      </tr>`).join('');
+  } catch(e) { toast('Cannot reach API', 'error'); }
+}
+
+// FLOWS
+async function loadFlows() {
+  try {
+    const flows = await apiGet(API + '/monitor/flows');
+    document.getElementById('flow-count').textContent = `${flows.length} rules`;
+    const tb = document.getElementById('flows-table');
+    if (!flows.length) { tb.innerHTML = '<tr><td colspan="8" class="empty-state">No flow rules</td></tr>'; return; }
+    tb.innerHTML = flows.map(f => `
+      <tr>
+        <td class="mono text2" style="font-size:11px">${f.flow_id}</td>
+        <td>
+          <div class="priority-bar">
+            <span class="mono">${f.priority}</span>
+            <div class="priority-fill" style="width:${Math.min(f.priority/2,100)}px"></div>
+          </div>
+        </td>
+        <td class="ip">${f.src}</td>
+        <td class="ip">${f.dst}</td>
+        <td class="mono text2">${f.protocol}</td>
+        <td>${badgeHtml(f.action)}</td>
+        <td><span class="hits-badge">${f.hit_count}</span></td>
+        <td><button class="btn btn-danger" style="font-size:11px;padding:4px 10px" onclick="deleteFlow('${f.flow_id}')">✕</button></td>
+      </tr>`).join('');
+  } catch(e) { toast('Cannot reach API', 'error'); }
+}
+
+async function addFlow() {
+  const src = document.getElementById('fl-src').value.trim();
+  const dst = document.getElementById('fl-dst').value.trim();
+  const action = document.getElementById('fl-action').value;
+  const priority = parseInt(document.getElementById('fl-priority').value);
+  const protocol = document.getElementById('fl-proto').value;
+  if (!src || !dst) { toast('Enter source and destination', 'error'); return; }
+  try {
+    const resp = await fetch(API + '/flows/add', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ src, dst, action, priority, protocol }) });
+    if (!resp.ok) throw new Error('failed');
+    toast('✓ Flow rule added');
+    loadFlows();
+  } catch(e) { toast('Error adding flow', 'error'); }
+}
+
+async function deleteFlow(id) {
+  try {
+    const resp = await fetch(API + '/flows/' + id, { method:'DELETE' });
+    if (!resp.ok) throw new Error('failed');
+    toast('Flow rule removed');
+    loadFlows();
+  } catch(e) { toast('Error', 'error'); }
+}
+
+// SIMULATE
+async function simulateTraffic() {
+  const src = document.getElementById('sim-src').value.trim();
+  const dst = document.getElementById('sim-dst').value.trim();
+  const protocol = document.getElementById('sim-proto').value;
+  const size_kb = parseInt(document.getElementById('sim-size').value);
+  if (!src || !dst) { toast('Enter source and destination', 'error'); return; }
+  quickSim(src, dst, protocol, size_kb);
+}
+
+async function quickSim(src, dst, protocol, size_kb) {
+  document.getElementById('sim-src').value = src;
+  document.getElementById('sim-dst').value = dst;
+  document.getElementById('sim-proto').value = protocol;
+  document.getElementById('sim-size').value = size_kb;
+
+  try {
+    const r = await apiPost(API + '/simulate/traffic', { src, dst, protocol, size_kb });
+    const result = r.result || 'unknown';
+    const box = document.getElementById('sim-result');
+    const ok = result.includes('forward') || result.includes('redirect');
+    const isRedir = result.includes('redirect');
+    box.className = `result-box show ${ok ? (isRedir ? 'result-redir' : 'result-ok') : 'result-drop'}`;
+    const icon = ok ? (isRedir ? '⇄' : '✓') : '✗';
+    box.innerHTML = `${icon} RESULT: ${result.toUpperCase()}<br><span style="opacity:0.7;font-size:11px">${src} → ${dst} | ${protocol.toUpperCase()} | ${size_kb}KB</span>`;
+  } catch(e) { toast('Cannot reach API', 'error'); }
+}
+
+// TRAFFIC LOG
+async function loadTraffic() {
+  try {
+    const traffic = await apiGet(API + '/monitor/traffic');
+    const tb = document.getElementById('traffic-log');
+    if (!traffic.length) { tb.innerHTML = '<div class="empty-state">No traffic recorded yet</div>'; return; }
+    tb.innerHTML = [...traffic].reverse().map(t => {
+      const ok = t.result && (t.result.includes('forward') || t.result.includes('redirect'));
+      const isRedir = t.result && t.result.includes('redirect');
+      const cls = ok ? (isRedir ? 'log-result-redir' : 'log-result-ok') : 'log-result-drop';
+      const icon = ok ? (isRedir ? '⇄' : '✓') : '✗';
+      return `<div class="log-entry">
+        <span class="log-time">${t.time.substr(11,8)}</span>
+        <span class="log-src">${t.src}</span>
+        <span class="text2 mono">→</span>
+        <span class="log-dst">${t.dst}</span>
+        <span class="mono text2">${t.protocol}</span>
+        <span class="mono text2">${t.size_kb}KB</span>
+        <span class="${cls}">${icon} ${t.result}</span>
+      </div>`;
+    }).join('');
+  } catch(e) { toast('Cannot reach API', 'error'); }
+}
+
+// Init
+checkHealth();
+setInterval(checkHealth, 5000);
+loadDashboard();
+setInterval(loadDashboard, 8000);
+</script>
+</body>
+</html>
